@@ -60,6 +60,7 @@
 
 -spec start() -> ignore | ok | no_return().
 start() ->
+    application:set_env(cqerl, maps, true),
     case ejabberd_config:get_local_option(cassandra_servers) of
         undefined ->
             ignore;
@@ -301,8 +302,8 @@ test_query(PoolName, UserJID) ->
 total_count_query(PoolName, Table) ->
     UserJID = undefined,
     Res = mongoose_cassandra:cql_read(PoolName, UserJID, ?MODULE, {total_count_query, Table}, []),
-    {ok, [Row]} = Res,
-    proplists:get_value(count, Row).
+    {ok, [#{count := Count}]} = Res,
+    Count.
 
 total_count_queries() ->
     [{{total_count_query, T}, total_count_query_cql(T)} || T <- tables()].

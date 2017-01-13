@@ -243,8 +243,8 @@ message_id_to_nick_name(PoolName, RoomJID, BRoomJID, MessID) ->
     case Rows of
         [] ->
             {error, not_found};
-        [Row] ->
-            {ok, proplists:get_value(nick_name, Row)}
+        [#{nick_name := NickName}] ->
+            {ok, NickName}
     end.
 
 
@@ -492,10 +492,7 @@ from_id(ID, Filter = #mam_muc_ca_filter{start_id = AfterID}) ->
 rows_to_uniform_format(MessageRows, RoomJID) ->
     [row_to_uniform_format(Row, RoomJID) || Row <- MessageRows].
 
-row_to_uniform_format(Row, RoomJID) ->
-    BNick = proplists:get_value(nick_name, Row),
-    Data = proplists:get_value(message, Row),
-    MessID = proplists:get_value(id, Row),
+row_to_uniform_format(#{nick_name := BNick, message := Data, id := MessID}, RoomJID) ->
     SrcJID = jid:replace_resource(RoomJID, BNick),
     Packet = stored_binary_to_packet(Data),
     {MessID, SrcJID, Packet}.
@@ -551,8 +548,8 @@ purge_multiple_messages(_Result, Host, RoomID, RoomJID, Borders,
                                              Params),
     %% TODO can be faster
     %% TODO rate limiting
-    [purge_single_message(ok, Host, proplists:get_value(id, Row), RoomID, RoomJID, Now)
-     || Row <- Rows],
+    [purge_single_message(ok, Host, Id, RoomID, RoomJID, Now)
+     || #{id := Id} <- Rows],
     ok.
 
 
@@ -627,9 +624,9 @@ calc_before(PoolName, RoomJID, Host, Filter, MessID) ->
 calc_count(PoolName, RoomJID, _Host, Filter) ->
     QueryName = {calc_count_query, select_filter(Filter)},
     Params = eval_filter_params(Filter),
-    {ok, [Row]} = mongoose_cassandra:cql_read(PoolName, RoomJID, ?MODULE, QueryName,
+    {ok, [#{count := Count}]} = mongoose_cassandra:cql_read(PoolName, RoomJID, ?MODULE, QueryName,
                                               Params),
-    proplists:get_value(count, Row).
+    Count.
 
 %% @doc Convert offset to index of the first entry
 %% Returns undefined if not there are not enough rows
@@ -646,7 +643,7 @@ offset_to_start_id(PoolName, RoomJID, Filter, Offset) when is_integer(Offset), O
     case RowsIds of
         [] -> undefined;
         [_ | _] ->
-            proplists:get_value(id, lists:last(RowsIds))
+            maps:get(id, lists:last(RowsIds))
     end.
 
 prepare_filter(RoomJID, Borders, Start, End, WithNick) ->

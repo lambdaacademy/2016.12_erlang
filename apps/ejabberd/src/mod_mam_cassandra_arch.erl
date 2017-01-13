@@ -247,8 +247,8 @@ message_id_to_remote_jid(PoolName, UserJID, BUserJID, MessID) ->
     case Rows of
         [] ->
             {error, not_found};
-        [Row] ->
-            {ok, proplists:get_value(remote_jid, Row)}
+        [#{remote_jid := RemoteJID}] ->
+            {ok, RemoteJID}
     end.
 
 
@@ -492,10 +492,10 @@ from_id(ID, Filter = #mam_ca_filter{start_id = AfterID}) ->
 rows_to_uniform_format(MessageRows) ->
     [row_to_uniform_format(Row) || Row <- MessageRows].
 
-row_to_uniform_format(Row) ->
-    SrcJID = unserialize_jid(proplists:get_value(from_jid, Row)),
-    Packet = stored_binary_to_packet(proplists:get_value(message, Row)),
-    MsgID = proplists:get_value(id, Row),
+row_to_uniform_format(#{from_jid := FromJID, message := Msg, id := Id}) ->
+    SrcJID = unserialize_jid(FromJID),
+    Packet = stored_binary_to_packet(Msg),
+    MsgID = Id,
     {MsgID, SrcJID, Packet}.
 
 row_to_message_id(Row) ->
@@ -553,8 +553,8 @@ purge_multiple_messages(_Result, Host, UserID, UserJID, Borders,
                                              Params),
     %% TODO can be faster
     %% TODO rate limiting
-    [purge_single_message(ok, Host, proplists:get_value(id, Row), UserID, UserJID, Now)
-     || Row <- Rows],
+    [purge_single_message(ok, Host, Id, UserID, UserJID, Now)
+     || #{id := Id} <- Rows],
     ok.
 
 
@@ -629,9 +629,9 @@ calc_before(PoolName, UserJID, Host, Filter, MessID) ->
 calc_count(PoolName, UserJID, _Host, Filter) ->
     QueryName = {calc_count_query, select_filter(Filter)},
     Params = eval_filter_params(Filter),
-    {ok, [Row]} = mongoose_cassandra:cql_read(PoolName, UserJID, ?MODULE, QueryName,
+    {ok, [#{count := Count}]} = mongoose_cassandra:cql_read(PoolName, UserJID, ?MODULE, QueryName,
                                               Params),
-    proplists:get_value(count, Row).
+    Count.
 
 %% @doc Convert offset to index of the first entry
 %% Returns undefined if not there are not enough rows
@@ -648,7 +648,7 @@ offset_to_start_id(PoolName, UserJID, Filter, Offset) when is_integer(Offset), O
     case RowsIds of
         [] -> undefined;
         [_ | _] ->
-            proplists:get_value(id, lists:last(RowsIds))
+            maps:get(id, lists:last(RowsIds))
     end.
 
 prepare_filter(UserJID, Borders, Start, End, WithJID) ->

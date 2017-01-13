@@ -137,8 +137,8 @@ get_behaviour(DefaultBehaviour, Host, _UserID, LocJID, RemJID) ->
             DefaultBehaviour;
         {ok, [_ | _] = Rows} ->
             %% After sort <<>>, <<"a">>, <<"a/b">>
-            LastRow = lists:last(lists:sort(Rows)),
-            decode_behaviour(proplists:get_value(behaviour, LastRow))
+            #{behaviour := Behaviour} = lists:last(lists:sort(Rows)),
+            decode_behaviour(Behaviour)
     end.
 
 
@@ -252,18 +252,16 @@ full_jid(JID) ->
                         }.
 decode_prefs_rows([], DefaultMode, AlwaysJIDs, NeverJIDs) ->
     {DefaultMode, AlwaysJIDs, NeverJIDs};
-decode_prefs_rows([Row | Rows], DefaultMode, AlwaysJIDs, NeverJIDs) ->
-    JID = proplists:get_value(remote_jid, Row),
-    Behaviour = proplists:get_value(behaviour, Row),
-    case {JID, Behaviour} of
-        {<<>>, Behaviour} ->
-            decode_prefs_rows(Rows, decode_behaviour(Behaviour), AlwaysJIDs, NeverJIDs);
-        {JID, <<"A">>} ->
-            decode_prefs_rows(Rows, DefaultMode, [JID | AlwaysJIDs], NeverJIDs);
-        {JID, <<"N">>} ->
-            decode_prefs_rows(Rows, DefaultMode, AlwaysJIDs, [JID | NeverJIDs])
-    end.
 
+decode_prefs_rows([#{remote_jid := <<>>, behaviour := Behaviour} | Rows],
+                  _DefaultMode, AlwaysJIDs, NeverJIDs) ->
+    decode_prefs_rows(Rows, decode_behaviour(Behaviour), AlwaysJIDs, NeverJIDs);
+decode_prefs_rows([#{remote_jid := JID, behaviour := <<"A">>} | Rows],
+                  DefaultMode, AlwaysJIDs, NeverJIDs) ->
+    decode_prefs_rows(Rows, DefaultMode, [JID | AlwaysJIDs], NeverJIDs);
+decode_prefs_rows([#{remote_jid := JID, behaviour := <<"N">>} | Rows],
+                  DefaultMode, AlwaysJIDs, NeverJIDs) ->
+    decode_prefs_rows(Rows, DefaultMode, AlwaysJIDs, [JID | NeverJIDs]).
 
 %% ----------------------------------------------------------------------
 %% Dynamic params module
