@@ -17,10 +17,12 @@
 * Configurable database backends:
     * Transient:
         * Mnesia
-        * Redis   
+        * Redis
     * Persistent:
         * RDBMS: MySQL, PostgreSQL, generic ODBC
         * NOSQL: Riak KV
+* Integration with third-party services
+    * [Amazon Simple Notification Service](../modules/mod_aws_sns.md)
 
 ## Supported XEPs
 
@@ -81,4 +83,3 @@
 | ------------- | ------------- |
 |[MUC Light](../open-extensions/muc_light.md)|`mod_muc_light`|
 |[Token-based reconnection](../open-extensions/token-reconnection.md)|`mod_auth_token`, `mod_keystore`|
-
