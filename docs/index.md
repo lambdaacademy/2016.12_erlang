@@ -74,29 +74,18 @@ Fetched 9354 kB in 55s (169 kB/s)
 Reading package lists... Done
 ```
 
-Install Erlang base package, which provides Erlang runtime.
+Install Erlang package, which provides runtime, compiler and all OTP libraries
 
 ```
-pi@raspberrypi:~ $ sudo apt-get install erlang-base
+pi@raspberrypi:~ $ sudo apt-get install erlang erlang-dev erlang-snmp erlang-asn1 erlang-eunit
 Reading package lists... Done
 Building dependency tree       
 Reading state information... Done
-The following extra packages will be installed:
-  erlang-crypto erlang-syntax-tools
-Suggested packages:
-  erlang-tools erlang erlang-manpages erlang-doc
-The following NEW packages will be installed:
-  erlang-base erlang-crypto erlang-syntax-tools
-0 upgraded, 3 newly installed, 0 to remove and 63 not upgraded.
-Need to get 7277 kB of archives.
-After this operation, 14.1 MB of additional disk space will be used.
+[...]
 Do you want to continue? [Y/n] Y
 Get:1 http://binaries.erlang-solutions.com/debian/ jessie/contrib erlang-base armhf 1:19.2-1 [6811 kB]
 Get:2 http://binaries.erlang-solutions.com/debian/ jessie/contrib erlang-crypto armhf 1:19.2-1 [106 kB]
-Get:3 http://binaries.erlang-solutions.com/debian/ jessie/contrib erlang-syntax-tools armhf 1:19.2-1 [360 kB]
-Fetched 7277 kB in 8s (897 kB/s)                                               
 [...]
-Setting up erlang-syntax-tools (1:19.2-1) ...
 ```
 
 Start Erlang shell
@@ -107,4 +96,28 @@ Erlang/OTP 19 [erts-8.2] [source] [async-threads:10] [kernel-poll:false]
 
 Eshell V8.2  (abort with ^G)
 1> 
+```
+
+### [](#setup-mongooseim) Installing MongooseIM on RaspberryPi
+
+Install git and clone the fork of MongooseIM repository from GitHub:
+
+```
+pi@raspberrypi:~ $ sudo apt-get install git libexpat1-dev libssl-dev
+pi@raspberrypi:~ $ git clone https://github.com/lambdaacademy/2016.12_erlang
+Cloning into '2016.12_erlang'...
+remote: Counting objects: 56062, done.
+remote: Compressing objects: 100% (37/37), done.
+remote: Total 56062 (delta 41), reused 20 (delta 20), pack-reused 56000
+Receiving objects: 100% (56062/56062), 21.68 MiB | 874.00 KiB/s, done.
+Resolving deltas: 100% (40227/40227), done.
+Checking connectivity... done.
+```
+
+Build MongooseIM:
+
+```
+pi@raspberrypi:~ $ cd 2016.12_erlang/
+pi@raspberrypi:~/2016.12_erlang $ make
+pi@raspberrypi:~/2016.12_erlang $ make rel
 ```
